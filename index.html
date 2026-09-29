@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Larigou Questões</title>
+  <meta name="theme-color" content="#0D0620">
+  <link rel="icon" type="image/svg+xml" href="img/larigou-logo/larigou-icone-app.svg">
+  <link rel="apple-touch-icon" href="img/larigou-logo/larigou-icone-app-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // aplica o tema salvo antes de desenhar a página (evita piscar)
+    try { const t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <a class="marca" href="#/" aria-label="Larigou Questões — início">
+      <img class="marca-claro" src="img/larigou-logo/larigou-logo-horizontal-fundo-claro.svg" alt="Larigou Questões">
+      <img class="marca-escuro" src="img/larigou-logo/larigou-logo-horizontal-transparente-fundo-escuro.svg" alt="">
+    </a>
+    <nav class="menu" aria-label="Seções">
+      <a href="#/" data-rota="inicio">Início</a>
+      <a href="#/resolver" data-rota="resolver">Resolver</a>
+      <a href="#/simulados" data-rota="simulados">Simulados</a>
+      <a href="#/caderno" data-rota="caderno">Caderno de erros <span class="contador roxo" id="contador-caderno" hidden></span></a>
+      <a href="#/desempenho" data-rota="desempenho">Desempenho</a>
+      <a href="#/questoes" data-rota="banco">Banco de questões <span class="contador" id="contador-revisao" hidden></span></a>
+    </nav>
+    <button class="botao-tema" id="botao-tema" type="button" aria-label="Alternar tema claro/escuro" title="Tema claro/escuro">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+    </button>
+  </header>
+  <main id="conteudo" tabindex="-1"></main>
+  <div class="aviso-flutuante" id="aviso" role="status" aria-live="polite" hidden></div>
+  <script src="modo-web.js"></script>
+  <script src="resolver.js"></script>
+  <script src="simulado.js"></script>
+  <script src="desempenho.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
