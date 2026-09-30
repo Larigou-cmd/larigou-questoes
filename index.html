@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Larigou Questões</title>
-  <meta name="theme-color" content="#0D0620">
+  <meta name="theme-color" content="#05020C">
   <link rel="icon" type="image/svg+xml" href="img/larigou-logo/larigou-icone-app.svg">
   <link rel="apple-touch-icon" href="img/larigou-logo/larigou-icone-app-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
   <script>
     // aplica o tema salvo antes de desenhar a página (evita piscar)
-    try { const t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    let t = null; try { t = localStorage.getItem("tema"); } catch (e) {}
+    document.documentElement.dataset.theme = t || "dark";  // o Neon HUD nasce escuro; o botão troca para claro
   </script>
 </head>
 <body>
