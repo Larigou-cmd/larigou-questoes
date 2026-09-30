@@ -550,3 +550,10 @@ code { background: var(--superficie-2); padding: 1px 6px; border-radius: 4px; fo
 
 /* versão web (GitHub Pages): sem edição do banco */
 .modo-web .so-local { display: none !important; }
+.indicador-nuvem { font-size: .8rem; font-weight: 600; color: var(--tinta-2); text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.indicador-nuvem::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tinta-2); }
+.indicador-nuvem[data-estado="ok"]::before { background: var(--certo); }
+.indicador-nuvem[data-estado="erro"]::before { background: var(--atencao); }
+.indicador-nuvem[data-estado="sincronizando"]::before { background: var(--orquidea); }
+.form-nuvem { display: grid; gap: 12px; max-width: 420px; }
+@media (max-width: 760px) { .indicador-nuvem { margin-left: auto; } .indicador-nuvem + .botao-tema { margin-left: 0; } }

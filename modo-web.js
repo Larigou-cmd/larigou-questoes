@@ -33,12 +33,13 @@ function hojeIso(somaDias = 0) {
 
 // ------------------------------------------------------------------ progresso local
 function storeVazio() {
-  return { versao: 1, respostas: [], usuario: {}, revisao: {}, simulados: [], seq: { resposta: 0, simulado: 0 } };
+  return { versao: 1, respostas: [], usuario: {}, revisao: {}, simulados: [], seq: { resposta: 0, simulado: 0 },
+    removidos: { revisao: {}, simulados: {} } };
 }
 function carregarStore() {
   try {
     const s = JSON.parse(localStorage.getItem(WEB.chave));
-    if (s && s.versao === 1) return s;
+    if (s && s.versao === 1) { s.removidos ??= { revisao: {}, simulados: {} }; return s; }
   } catch (e) {}
   return storeVazio();
 }
@@ -361,6 +362,8 @@ rota("POST", /^\/api\/simulados\/(\d+)\/finalizar$/, ([id], _, corpo) => {
 });
 
 rota("DELETE", /^\/api\/simulados\/(\d+)$/, ([id]) => {
+  const alvo = simPorId(Number(id));
+  if (alvo) WEB.store.removidos.simulados[chaveSimulado(alvo)] = agoraIso();
   WEB.store.simulados = WEB.store.simulados.filter(s => s.id !== Number(id));
   salvarStore();
   return { ok: true };
@@ -439,7 +442,7 @@ rota("GET", /^\/api\/caderno\/ids$/, (_, args) => {
 });
 rota("DELETE", /^\/api\/caderno\/(\d+)$/, ([id]) => {
   const q = WEB.porId.get(Number(id));
-  if (q) { delete WEB.store.revisao[q.hash]; salvarStore(); }
+  if (q) { delete WEB.store.revisao[q.hash]; WEB.store.removidos.revisao[q.hash] = agoraIso(); salvarStore(); }
   return { ok: true };
 });
 
@@ -477,8 +480,11 @@ function progressoParaArquivo() {
     usuario: Object.entries(s.usuario).map(([hash, u]) => ({ hash, ...u })),
     revisao: Object.entries(s.revisao).map(([hash, r]) => ({ hash, ...r })),
     simulados: s.simulados.map(({ id, ...sim }) => sim),
+    removidos: s.removidos,
   };
 }
+
+const chaveSimulado = x => x.criado_em + "|" + x.titulo;
 
 /** Junta um progresso vindo de outro aparelho com o deste, sem duplicar nada. */
 function mesclarProgresso(p) {
@@ -509,10 +515,18 @@ function mesclarProgresso(p) {
       cont.caderno++;
     }
   }
-  const simChave = x => x.criado_em + "|" + x.titulo;
-  const simExist = new Set(s.simulados.map(simChave));
+  // remoções feitas em outro aparelho (tirar do caderno, excluir simulado)
+  for (const tipo of ["revisao", "simulados"])
+    for (const [k, quando] of Object.entries(p.removidos?.[tipo] || {}))
+      if (!s.removidos[tipo][k] || quando > s.removidos[tipo][k]) s.removidos[tipo][k] = quando;
+  for (const [hash, quando] of Object.entries(s.removidos.revisao)) {
+    const r = s.revisao[hash];
+    if (r && (r.ultima_em || r.entrou_em || "") <= quando) delete s.revisao[hash];
+  }
+  s.simulados = s.simulados.filter(x => !s.removidos.simulados[chaveSimulado(x)]);
+  const simExist = new Set(s.simulados.map(chaveSimulado));
   for (const sim of p.simulados || []) {
-    if (simExist.has(simChave(sim))) continue;
+    if (simExist.has(chaveSimulado(sim)) || s.removidos.simulados[chaveSimulado(sim)]) continue;
     s.simulados.push({ ...sim, id: ++s.seq.simulado });
     cont.simulados++;
   }
@@ -537,13 +551,15 @@ async function telaBackupWeb() {
       <h1>Meu progresso</h1>
       <section class="painel">
         <p>Nesta versão da internet, suas respostas, anotações, favoritas, simulados e caderno de erros ficam guardados
-          <strong>neste aparelho</strong>, no navegador. Ninguém mais vê.</p>
+          <strong>neste aparelho</strong>, no navegador. Se você entrar na sua conta, eles também ficam guardados na nuvem,
+          protegidos pela sua senha. Ninguém mais vê.</p>
         <p class="dica">Guardado aqui: ${s.respostas.length} respostas, ${Object.keys(s.usuario).length} questões com anotação/favorita,
           ${s.simulados.length} simulados, ${Object.keys(s.revisao).length} questões no caderno de erros.
           Questões publicadas em ${new Date(WEB.dados.gerado_em).toLocaleDateString("pt-BR")}: ${WEB.dados.questoes.length}.</p>
       </section>
+      ${typeof htmlContaNuvem === "function" ? htmlContaNuvem() : ""}
       <section class="painel" style="margin-top:16px">
-        <h2>Levar para outro aparelho</h2>
+        <h2>Levar para outro aparelho sem conta</h2>
         <ol class="passos">
           <li>Aqui, toque em <strong>Exportar meu progresso</strong>. Um arquivo <code>.json</code> é baixado.</li>
           <li>No outro aparelho (celular, outro navegador ou o app do notebook), abra a tela de backup e use
@@ -567,6 +583,7 @@ async function telaBackupWeb() {
         <button class="botao perigo pequeno" type="button" id="apagar-prog">Apagar o progresso deste aparelho</button>
       </section>
     </div>`;
+  if (typeof ligarContaNuvem === "function") ligarContaNuvem(telaBackupWeb);
   $("#exportar-prog").onclick = () => {
     const d = new Date();
     baixarArquivo(`larigou-progresso-${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}-${dois(d.getHours())}${dois(d.getMinutes())}.json`,
@@ -584,7 +601,9 @@ async function telaBackupWeb() {
     } catch (err) { avisar(err.message.includes("JSON") ? "O arquivo não é um JSON válido." : err.message, "erro"); }
   };
   $("#apagar-prog").onclick = () => {
-    if (!confirm("Apagar TODO o seu progresso deste aparelho? Exporte antes se quiser guardar.")) return;
+    const logada = typeof NUVEM !== "undefined" && NUVEM.sessao;
+    if (!confirm(logada ? "Apagar o progresso deste aparelho? Como você está conectada, ele volta da nuvem na próxima sincronização. Para apagar de vez, saia da conta antes."
+      : "Apagar TODO o seu progresso deste aparelho? Exporte antes se quiser guardar.")) return;
     WEB.store = storeVazio();
     salvarStore();
     try { localStorage.removeItem("larigou.sessao"); } catch (e) {}
@@ -597,6 +616,8 @@ async function telaBackupWeb() {
 (function ajustarMenu() {
   const banco = document.querySelector('.menu a[data-rota="banco"]');
   if (banco) { banco.href = "#/backup"; banco.firstChild.textContent = "Meu progresso "; }
+  const tema = document.getElementById("botao-tema");
+  if (tema) tema.insertAdjacentHTML("beforebegin", `<a class="indicador-nuvem" id="indicador-nuvem" href="#/backup" hidden></a>`);
 })();
 
 if ("serviceWorker" in navigator) {
