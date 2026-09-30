@@ -370,6 +370,11 @@ rota("DELETE", /^\/api\/simulados\/(\d+)$/, ([id]) => {
 });
 
 // ---- desempenho
+// XP e sequência de dias: as regras ficam em jogo.js
+rota("GET", /^\/api\/jogo\/respostas$/, () => ({
+  registros: respostasValidas().map(r => [r.hash, r.respondida_em.slice(0, 10), r.correta]),
+}));
+
 rota("GET", /^\/api\/desempenho\/resumo$/, () => {
   const rs = respostasValidas();
   const pct = (c, t) => (t ? Math.round((1000 * c) / t) / 10 : null);

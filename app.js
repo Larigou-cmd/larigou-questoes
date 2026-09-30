@@ -117,6 +117,7 @@ async function navegar() {
         } else location.hash = "#/resolver";
         return;
       }
+      if (nome !== "inicio") atualizarJogo();  // a Início já atualiza antes de desenhar
       try {
         await tela(...m.slice(1));
         if (nome === "banco" && !window.MODO_WEB) submenuBanco();
@@ -248,6 +249,7 @@ async function telaInicio() {
   const discs = await Promise.all(m.disciplinas.map(async d => [d, (await api(`/api/questoes?disciplina=${encodeURIComponent(d)}&limite=1`)).total]));
   discs.forEach(([d, n]) => { if (n) porDisc[d] = n; });
   const maior = Math.max(...Object.values(porDisc), 1);
+  await atualizarJogo();
 
   main.innerHTML = `
     <section class="inicio-cabeca">
@@ -268,6 +270,7 @@ async function telaInicio() {
         <p style="margin:.4em 0 0;color:var(--tinta-2)">questões no banco${c.manuais ? `, ${c.manuais} cadastradas por você` : ""}${c.anuladas ? `, ${c.anuladas} anuladas` : ""}</p>
       </div>
     </section>
+    ${htmlPainelJogo()}
     <div class="grade-2">
       <section class="painel">
         <h2>Provas importadas</h2>

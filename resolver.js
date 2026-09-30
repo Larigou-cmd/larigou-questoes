@@ -371,6 +371,8 @@ async function responderAtual() {
     $(".historico").textContent = `Você já respondeu esta questão ${h.tentativas} ${h.tentativas === 1 ? "vez" : "vezes"} e acertou ${h.acertos}.`;
     const feitas = Object.values(est.sessao.resultados);
     $(".placar").textContent = `${feitas.filter(x => x.correta === 1).length} de ${feitas.length} certas`;
+    const ganho = await atualizarJogo();
+    if (ganho?.xp > 0 && estadoQuestao === est) $("#feedback .feedback")?.insertAdjacentHTML("beforeend", ` <span class="ganho-xp">+${ganho.xp} XP</span>`);
   } catch (e) {
     avisar(e.message, "erro");
   }

@@ -755,3 +755,63 @@ h1, h2 { font-weight: 700; letter-spacing: .01em; }
 .tabela-provas th { text-transform: uppercase; letter-spacing: .06em; font-size: .72rem; }
 .log, code { border-radius: 0; }
 .leitura img { border-radius: 0; }
+
+/* ============ XP, nível e sequência de dias ============ */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hud-jogo {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; text-decoration: none; color: var(--tinta);
+  font-family: var(--fonte-ui); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.hud-nivel {
+  width: 30px; height: 33px; display: grid; place-items: center; font-size: .9rem; color: #fff;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, var(--magenta), #7C3AED);
+}
+.hud-xp { width: 56px; height: 6px; background: var(--superficie-2); display: block;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px); mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px); }
+.hud-xp-cheio { display: block; height: 100%; background: linear-gradient(90deg, #9333EA, var(--magenta)); }
+.hud-seq { display: inline-flex; align-items: center; gap: 3px; color: var(--tinta-2); font-size: .95rem; }
+.hud-seq svg { width: 18px; height: 18px; fill: currentColor; opacity: .55; }
+.hud-seq.acesa { color: var(--tinta); }
+.hud-seq.acesa svg { fill: #FF8A3D; opacity: 1; filter: drop-shadow(0 0 5px rgba(255, 138, 61, .7)); }
+.hud-jogo:hover .hud-nivel { filter: brightness(1.15); }
+@media (max-width: 760px) {
+  .hud-jogo:not([hidden]) { margin-left: auto; }
+  .hud-jogo:not([hidden]) ~ .indicador-nuvem, .hud-jogo:not([hidden]) ~ .atalho-conta { margin-left: 0; }
+  .hud-xp { display: none; }
+  .hud-nivel { width: 28px; height: 31px; font-size: .82rem; }
+}
+@media (max-width: 380px) { .topo .indicador-nuvem { font-size: 0; gap: 0; } }
+
+.jogo-inicio { margin-bottom: 24px; }
+.cartao-nivel { display: flex; gap: 20px; align-items: center; }
+.hex-nivel {
+  flex: none; width: 76px; height: 84px; display: grid; place-items: center;
+  font: 700 2rem var(--fonte-ui); color: #fff;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, var(--magenta), #7C3AED);
+}
+.nivel-info { flex: 1; min-width: 0; }
+.nivel-info h2 { margin: 0 0 4px; }
+.nivel-info .dica { margin: 0; }
+.trilho-xp { height: 10px; margin: 12px 0 6px; background: var(--superficie-2);
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 12px); mask: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 12px); }
+.trilho-xp span { display: block; height: 100%; background: linear-gradient(90deg, #9333EA, var(--magenta)); }
+.numeros-xp { display: flex; justify-content: space-between; gap: 12px; font-size: .82rem; color: var(--tinta-2); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+.regra-xp { margin-top: 10px !important; font-size: .78rem; }
+.sequencia-topo { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.sequencia-topo strong { font: 700 2.6rem/1 var(--fonte-ui); font-variant-numeric: tabular-nums; color: var(--tinta-2); }
+.sequencia-topo strong.acesa { color: var(--primaria); text-shadow: 0 0 14px color-mix(in srgb, var(--magenta) 55%, transparent); }
+.sequencia-topo span { color: var(--tinta-2); text-transform: uppercase; letter-spacing: .08em; font-size: .85rem; font-weight: 600; }
+.semana-jogo { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px;
+  text-align: center; font-size: .74rem; color: var(--tinta-2); text-transform: uppercase; letter-spacing: .04em; }
+.semana-jogo i { display: block; width: min(100%, 31px); height: 34px; margin: 0 auto 4px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--superficie-2); }
+.semana-jogo .feito i { background: linear-gradient(160deg, var(--magenta), #7C3AED); }
+.semana-jogo .hoje { color: var(--primaria); font-weight: 700; }
+.semana-jogo .hoje:not(.feito) i { background: repeating-linear-gradient(135deg, var(--superficie-2) 0 4px, color-mix(in srgb, var(--primaria) 30%, var(--superficie-2)) 4px 6px); }
+.cartao-sequencia .dica { margin: 0; }
+.ganho-xp { float: right; font-weight: 700; color: var(--primaria); text-shadow: 0 0 10px color-mix(in srgb, var(--magenta) 50%, transparent); letter-spacing: .04em; }
+@media (max-width: 560px) {
+  .cartao-nivel { gap: 14px; }
+  .hex-nivel { width: 60px; height: 66px; font-size: 1.6rem; }
+}
