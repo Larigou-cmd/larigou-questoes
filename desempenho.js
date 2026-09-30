@@ -218,7 +218,18 @@ async function telaDesempenho() {
           <td class="num">${p.certas}</td><td class="num">${p.erradas}</td><td class="num">${fmtPct(p.pct)}</td></tr>`).join("")}</tbody></table>`;
       return;
     }
-    if (!pontos.length) { $("#g-pct").innerHTML = $("#g-vol").innerHTML = `<p class="dica">Sem respostas nesta disciplina.</p>`; return; }
+    const comResposta = pontos.filter(p => p.respostas);
+    $$("#area-graficos .titulo-grafico, #g-vol").forEach(el => el.hidden = comResposta.length < 2);
+    if (!comResposta.length) { $("#g-pct").innerHTML = `<p class="dica">Sem respostas nesta disciplina.</p>`; return; }
+    if (comResposta.length < 2) {
+      // com um período só, o gráfico vira um ponto solto: melhor dizer o que vai aparecer
+      const unid = { dia: ["dia", "dias"], semana: ["semana", "semanas"], mes: ["mês", "meses"] }[estado.unidade];
+      const p = comResposta[0];
+      $("#g-pct").innerHTML = `<div class="grafico-espera">
+        <p><strong>${p.rotuloLongo}:</strong> ${p.respostas} ${p.respostas === 1 ? "resposta" : "respostas"}, ${fmtPct(p.pct)} de acerto.</p>
+        <p class="dica">O gráfico de evolução aparece quando você tiver estudado em pelo menos 2 ${unid[1]} diferentes.</p></div>`;
+      return;
+    }
     graficoLinhaPct($("#g-pct"), pontos);
     graficoBarrasVolume($("#g-vol"), pontos);
   };

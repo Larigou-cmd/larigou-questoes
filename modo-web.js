@@ -615,8 +615,20 @@ async function telaBackupWeb() {
 // ------------------------------------------------------------------ ajustes de navegação da versão web
 (function ajustarMenu() {
   const banco = document.querySelector('.menu a[data-rota="banco"]');
-  if (banco) { banco.href = "#/backup"; banco.firstChild.textContent = "Meu progresso "; }
-  const tema = document.getElementById("botao-tema");
+  if (banco) {
+    // o contador fica no lugar; troca só o ícone e os rótulos
+    banco.href = "#/backup";
+    banco.querySelector(".icone").innerHTML = `<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>`;
+    banco.querySelector(".longo").textContent = "Meu progresso";
+    banco.querySelector(".curto").textContent = "Progresso";
+  }
+  const conta = document.getElementById("atalho-conta");
+  if (conta) {
+    conta.href = "#/backup";
+    conta.setAttribute("aria-label", "Meu progresso"); conta.title = "Meu progresso";
+    conta.querySelector("svg").innerHTML = `<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>`;
+  }
+  const tema = document.getElementById("atalho-conta") || document.getElementById("botao-tema");
   if (tema) tema.insertAdjacentHTML("beforebegin", `<a class="indicador-nuvem" id="indicador-nuvem" href="#/backup" hidden></a>`);
 })();
 

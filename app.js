@@ -108,7 +108,7 @@ async function navegar() {
   for (const [re, tela, nome] of ROTAS) {
     const m = hash.split("?")[0].match(re);
     if (m) {
-      $$(".menu a").forEach(a => a.dataset.rota === nome ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+      $$(".menu a, #atalho-conta").forEach(a => a.dataset.rota === nome ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
       // versão web: sem edição do banco; "#/questoes/ID" abre a questão para resolver
       if (window.MODO_WEB && nome === "banco" && tela !== telaBackup) {
         if (tela === telaQuestoes && m[1]) {
