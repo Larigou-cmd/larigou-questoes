@@ -1,0 +1,12 @@
+name: Acordar o Supabase
+on:
+  schedule:
+    - cron: "17 11 */3 * *"
+  workflow_dispatch:
+jobs:
+  acordar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ler a tabela despertador
+        run: |
+          curl -fsS "https://lfxlyobcfxcoffhjjpyt.supabase.co/rest/v1/despertador?select=id" -H "apikey: sb_publishable_fcmgUtR-qv5hSCsH8FN1qg_Pf9E6NaU"
