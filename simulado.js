@@ -189,6 +189,7 @@ async function telaFazerSimulado(sidStr) {
         </aside>
       </div>
     </div>`;
+  medirBarra($(".barra-simulado"), "--altura-barra-sim");
 
   cron = { sid, base: sim.tempo_gasto_seg, inicio: Date.now(), limite: sim.duracao_min ? sim.duracao_min * 60 : null };
   const tique = () => {

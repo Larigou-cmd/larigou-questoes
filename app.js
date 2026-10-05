@@ -75,6 +75,20 @@ async function carregarMeta(forcar = false) {
   return META;
 }
 
+// ------------------------------------------------------------------ alturas para as barras que grudam no topo
+// O cabeçalho muda de altura (celular, nível/XP, aviso de sincronização), então medimos em vez de chutar.
+function medirBarra(el, variavel) {
+  if (!el || !window.ResizeObserver) return;
+  new ResizeObserver(() => document.documentElement.style.setProperty(variavel, el.offsetHeight + "px")).observe(el);
+}
+medirBarra($(".topo"), "--altura-topo");
+// no celular o menu vira a barra de abas fixa embaixo; no computador ele fica no cabeçalho e não conta
+if (window.ResizeObserver) new ResizeObserver(() => {
+  const menu = $(".menu");
+  const fixo = getComputedStyle(menu).position === "fixed";
+  document.documentElement.style.setProperty("--altura-abas", fixo ? Math.floor(innerHeight - menu.getBoundingClientRect().top) + "px" : "0px");
+}).observe($(".menu"));
+
 // ------------------------------------------------------------------ tema
 $("#botao-tema").addEventListener("click", () => {
   const raiz = document.documentElement;
