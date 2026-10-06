@@ -105,6 +105,22 @@ function filtrar(args) {
   });
 }
 
+/** Porta de consultas.filtros_estudo: a mesma questão repetida em várias provas (alternativas embaralhadas)
+ *  aparece uma vez só — fica a cópia de menor id entre as que passam nos filtros de conteúdo.
+ *  Com uma prova escolhida, ela aparece completa. */
+function filtrarEstudo(args) {
+  if (args.get("prova")) return filtrar(args);
+  const conteudo = new URLSearchParams(args);
+  for (const k of ["status", "favoritas", "com_anotacao"]) conteudo.delete(k);
+  const escolhida = new Map();
+  for (const q of filtrar(conteudo)) {
+    const k = q.chave_conteudo || "id" + q.id;
+    if (!escolhida.has(k) || q.id < escolhida.get(k)) escolhida.set(k, q.id);
+  }
+  const ids = new Set(escolhida.values());
+  return filtrar(args).filter(q => ids.has(q.id));
+}
+
 function comparar(...chaves) {
   return (a, b) => {
     for (const k of chaves) {
@@ -215,10 +231,11 @@ rota("GET", /^\/api\/meta$/, () => {
   const qs = WEB.dados.questoes;
   const distintos = campo => [...new Set(qs.map(q => q[campo]).filter(v => v !== null && v !== ""))]
     .sort((a, b) => (typeof a === "number" ? a - b : String(a).localeCompare(String(b), "pt-BR")));
-  const arvore = {}, assuntos = {};
+  const arvore = {}, assuntos = {}, vistas = new Set();
   for (const q of qs) {
     const d = q.disciplina || "", a = q.assunto || "";
-    (arvore[d] ??= {})[a] = (arvore[d][a] || 0) + 1;
+    const k = q.chave_conteudo || "id" + q.id;  // repetidas em várias provas contam uma vez
+    if (!vistas.has(k)) { vistas.add(k); (arvore[d] ??= {})[a] = (arvore[d][a] || 0) + 1; }
     if (a) (assuntos[d] ??= new Set()).add(a);
   }
   const provas = [...WEB.provas.values()].map(p => ({ ...p, n: qs.filter(q => q.prova_id === p.id).length }))
@@ -228,7 +245,7 @@ rota("GET", /^\/api\/meta$/, () => {
     orgaos: distintos("orgao"), cargos: distintos("cargo"), anos: distintos("ano"), disciplinas: distintos("disciplina"),
     assuntos: Object.fromEntries(Object.entries(assuntos).map(([d, s]) => [d, [...s].sort()])), provas,
     contagem: { total: qs.length, com_erro: 0, sem_assunto: qs.filter(q => !q.assunto).length, sugeridos: 0, manuais: 0,
-      anuladas: qs.filter(q => q.anulada).length },
+      anuladas: qs.filter(q => q.anulada).length, diferentes: vistas.size },
   };
 });
 
@@ -275,15 +292,15 @@ rota("PUT", /^\/api\/questoes\/(\d+)\/usuario$/, ([id], _, corpo) => {
 });
 
 rota("GET", /^\/api\/resolver\/ids$/, (_, args) =>
-  ({ ids: ordenar(filtrar(args), args.get("ordem")).slice(0, 5000).map(q => q.id), get total() { return this.ids.length; } }));
-rota("GET", /^\/api\/resolver\/contar$/, (_, args) => ({ total: filtrar(args).length }));
+  ({ ids: ordenar(filtrarEstudo(args), args.get("ordem")).slice(0, 5000).map(q => q.id), get total() { return this.ids.length; } }));
+rota("GET", /^\/api\/resolver\/contar$/, (_, args) => ({ total: filtrarEstudo(args).length }));
 
 // ---- simulados
 rota("GET", /^\/api\/simulados$/, () =>
   [...WEB.store.simulados].sort((a, b) => (a.criado_em < b.criado_em ? 1 : -1)).map(resumoSimulado));
 
 rota("POST", /^\/api\/simulados\/contar$/, (_, __, corpo) => {
-  const qs = filtrar(paramsDeFiltros(corpo.filtros)).filter(q => q.gabarito || q.anulada);
+  const qs = filtrarEstudo(paramsDeFiltros(corpo.filtros)).filter(q => q.gabarito || q.anulada);
   return { total: qs.length, tipos: [...new Set(qs.map(q => q.tipo))] };
 });
 
@@ -296,7 +313,7 @@ rota("POST", /^\/api\/simulados$/, (_, __, corpo) => {
     tituloPadrao = `${p.orgao} — ${p.cargo} (prova completa)`;
   } else {
     const quantidade = Math.max(1, Math.min(Number(corpo.quantidade) || 20, 500));
-    qs = ordemDeProva(embaralhar(filtrar(paramsDeFiltros(corpo.filtros)).filter(q => q.gabarito || q.anulada)).slice(0, quantidade));
+    qs = ordemDeProva(embaralhar(filtrarEstudo(paramsDeFiltros(corpo.filtros)).filter(q => q.gabarito || q.anulada)).slice(0, quantidade));
     tituloPadrao = `Simulado de ${new Date().toLocaleDateString("pt-BR")} (${qs.length} questões)`;
   }
   if (!qs.length) throw new ErroApi(400, ["Nenhuma questão encontrada para montar o simulado."]);

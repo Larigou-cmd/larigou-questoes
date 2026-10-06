@@ -280,8 +280,8 @@ async function telaInicio() {
         </div>
       </div>
       <div>
-        <div class="numero-grande">${c.total}</div>
-        <p style="margin:.4em 0 0;color:var(--tinta-2)">questões no banco${c.manuais ? `, ${c.manuais} cadastradas por você` : ""}${c.anuladas ? `, ${c.anuladas} anuladas` : ""}</p>
+        <div class="numero-grande">${c.diferentes ?? c.total}</div>
+        <p style="margin:.4em 0 0;color:var(--tinta-2)">questões diferentes no banco${c.manuais ? `, ${c.manuais} cadastradas por você` : ""}${c.anuladas ? `, ${c.anuladas} anuladas` : ""}${c.diferentes && c.total > c.diferentes ? `. Outras ${c.total - c.diferentes} se repetem entre provas do mesmo concurso: no Resolver aparecem uma vez só.` : ""}</p>
       </div>
     </section>
     ${htmlPainelJogo()}
