@@ -41,33 +41,81 @@ const TIPOS = [["ME", "Múltipla escolha"], ["CE", "Certo ou errado"]];
 const SITUACOES = [["", "Todas"], ["nao_resolvidas", "Que não resolvi"], ["erradas", "Que errei da última vez"],
   ["ja_errei", "Que já errei alguma vez"], ["acertadas", "Que acertei da última vez"]];
 
+// cada grupo de chips: campo do filtro, título e o que mostrar quando nada está marcado
+const GRUPOS_FILTRO = [["disciplina", "Disciplina", "Todas"], ["assunto", "Assunto", "Todos"], ["banca", "Banca", "Todas"],
+  ["orgao", "Órgão", "Todos"], ["cargo", "Cargo", "Todos"], ["ano", "Ano", "Todos"], ["tipo", "Tipo", "Todos"]];
+const CHAVE_FOCO = "larigou.foco";
+const OUTROS = [["favoritas", "Só favoritas", "Favoritas"], ["com_anotacao", "Só com anotação minha", "Com anotação"],
+  ["sem_anuladas", "Deixar de fora as anuladas", "Sem anuladas"]];
+
+function lerFoco() { return lerLocal(CHAVE_FOCO, null); }
+
+/** Texto curto de um grupo de filtro ("Todas", "SUS", "Farmacêutico, Técnico em Farmácia +1"). */
+function resumoGrupo(f, campo) {
+  const [, , vazio] = GRUPOS_FILTRO.find(g => g[0] === campo);
+  const rotulos = (f[campo] || []).map(v => campo === "tipo" ? Object.fromEntries(TIPOS)[v] ?? v : String(v));
+  if (!rotulos.length) return vazio;
+  return rotulos.length > 2 ? `${rotulos.slice(0, 2).join(", ")} +${rotulos.length - 2}` : rotulos.join(", ");
+}
+
+/** Resumo do filtro inteiro, para o botão "Meu foco" ("SUS + Técnico em Farmácia"). */
+function resumoFiltros(f) {
+  const partes = GRUPOS_FILTRO.filter(([c]) => f[c]?.length).map(([c]) => resumoGrupo(f, c));
+  if (f.status) partes.push(SITUACOES.find(s => s[0] === f.status)?.[1].toLowerCase());
+  if (f.favoritas) partes.push("favoritas");
+  return partes.length ? partes.join(" + ") : "todas as questões";
+}
+
+/** Linha que abre e fecha: título à esquerda, o que está escolhido à direita. */
+const RESUMOS_PADRAO = ["Todas", "Todos", "Nenhum", "Sem anuladas"];
+function grupoAbre(campo, titulo, conteudo, resumo) {
+  return `<details class="grupo-filtro" data-grupo="${campo}">
+    <summary><span class="grupo-titulo">${titulo}</span><span class="grupo-escolha ${RESUMOS_PADRAO.includes(resumo) ? "" : "escolhido"}">${esc(resumo)}</span></summary>
+    <div class="grupo-corpo">${conteudo}</div></details>`;
+}
+
+function htmlMeuFoco(f) {
+  const foco = lerFoco();
+  const igual = foco && resumoFiltros(novosFiltros(foco)) === resumoFiltros(f);
+  return `<div class="meu-foco">
+    ${foco ? `<button type="button" class="botao-foco" data-acao="aplicar-foco" aria-pressed="${!!igual}">
+      <span aria-hidden="true">★</span> <span class="foco-rotulo">Meu foco:</span> <span class="foco-resumo">${esc(resumoFiltros(novosFiltros(foco)))}</span></button>` : ""}
+    <button type="button" class="botao-texto" data-acao="salvar-foco" ${igual ? "hidden" : ""}>${foco ? "Trocar meu foco por estes filtros" : "☆ Salvar estes filtros como meu foco"}</button>
+  </div>`;
+}
+
 /** HTML dos grupos de filtros. `f` é o objeto de filtros (mesmo formato de FILTROS_PADRAO). */
-function htmlFiltros(f, meta, { ordem = true } = {}) {
-  const grupoChips = (campo, titulo, valores, rotulos = {}) => valores.length ? `
-    <fieldset class="grupo-filtro"><legend>${titulo}</legend><div class="chips">
+function htmlFiltros(f, meta, opcoes = {}) {
+  return `<div class="filtros-grupos" data-ordem="${opcoes.ordem !== false}">${htmlGruposFiltro(f, meta, opcoes)}</div>`;
+}
+
+function htmlGruposFiltro(f, meta, { ordem = true } = {}) {
+  const chips = (campo, valores, rotulos = {}, contagem = {}) => `<div class="chips">
       ${valores.map(v => `<button type="button" class="chip" data-campo="${campo}" data-valor="${esc(v)}"
-        aria-pressed="${f[campo].map(String).includes(String(v))}">${esc(rotulos[v] ?? v)}</button>`).join("")}
-    </div></fieldset>` : "";
+        aria-pressed="${f[campo].map(String).includes(String(v))}">${esc(rotulos[v] ?? v)}${contagem[v] != null ? ` <span class="n">${contagem[v]}</span>` : ""}</button>`).join("")}
+    </div>`;
+  const grupoChips = (campo, titulo, valores, rotulos) => valores.length
+    ? grupoAbre(campo, titulo, chips(campo, valores, rotulos), resumoGrupo(f, campo)) : "";
+  const discs = Object.entries(meta.arvore).filter(([d]) => d);
+  const nDisc = Object.fromEntries(discs.map(([d, ass]) => [d, Object.values(ass).reduce((a, b) => a + b, 0)]));
+  const situacao = SITUACOES.find(s => s[0] === f.status)?.[1] ?? "Todas";
+  const outros = OUTROS.filter(([c]) => f[c]).map(o => o[2]).join(", ") || "Nenhum";
   return `
-    <fieldset class="grupo-filtro"><legend>Disciplina</legend><div class="chips">
-      ${Object.entries(meta.arvore).filter(([d]) => d).map(([d, ass]) => `<button type="button" class="chip" data-campo="disciplina"
-        data-valor="${esc(d)}" aria-pressed="${f.disciplina.includes(d)}">${esc(d)} <span class="n">${Object.values(ass).reduce((a, b) => a + b, 0)}</span></button>`).join("")}
-    </div></fieldset>
+    ${htmlMeuFoco(f)}
+    ${grupoAbre("disciplina", "Disciplina", chips("disciplina", discs.map(([d]) => d), {}, nDisc), resumoGrupo(f, "disciplina"))}
     <div class="grupo-assuntos"></div>
     ${grupoChips("banca", "Banca", meta.bancas)}
     ${grupoChips("orgao", "Órgão", meta.orgaos)}
     ${grupoChips("cargo", "Cargo", meta.cargos)}
     ${grupoChips("ano", "Ano", meta.anos)}
     ${meta.tipos.length > 1 ? grupoChips("tipo", "Tipo", meta.tipos, Object.fromEntries(TIPOS)) : ""}
-    <fieldset class="grupo-filtro"><legend>Situação</legend><div class="chips">
+    ${grupoAbre("status", "Situação", `<div class="chips">
       ${SITUACOES.map(([v, r]) => `<label class="chip radio"><input type="radio" name="status" value="${v}" ${f.status === v ? "checked" : ""}>${r}</label>`).join("")}
-    </div></fieldset>
-    <fieldset class="grupo-filtro"><legend>Outros</legend><div class="chips">
-      <label class="check"><input type="checkbox" name="favoritas" ${f.favoritas ? "checked" : ""}> Só favoritas</label>
-      <label class="check"><input type="checkbox" name="com_anotacao" ${f.com_anotacao ? "checked" : ""}> Só com anotação minha</label>
-      <label class="check"><input type="checkbox" name="sem_anuladas" ${f.sem_anuladas ? "checked" : ""}> Deixar de fora as anuladas</label>
-    </div></fieldset>
-    ${ordem ? `<label class="campo" style="max-width:320px"><span>Ordem</span>
+    </div>`, situacao)}
+    ${grupoAbre("outros", "Outros", `<div class="chips">
+      ${OUTROS.map(([c, r]) => `<label class="check"><input type="checkbox" name="${c}" ${f[c] ? "checked" : ""}> ${r}</label>`).join("")}
+    </div>`, outros)}
+    ${ordem ? `<label class="campo campo-ordem"><span>Ordem</span>
       <select class="entrada" name="ordem">
         <option value="prova" ${f.ordem === "prova" ? "selected" : ""}>Como na prova</option>
         <option value="disciplina" ${f.ordem === "disciplina" ? "selected" : ""}>Por disciplina e assunto</option>
@@ -78,6 +126,7 @@ function htmlFiltros(f, meta, { ordem = true } = {}) {
 
 /** Liga cliques e mudanças do formulário ao objeto `f`; chama `aoMudar` a cada alteração. */
 function ligarFiltros(form, f, meta, aoMudar) {
+  const caixa = $(".filtros-grupos", form);
   const desenharAssuntos = () => {
     const blocos = f.disciplina.map(d => {
       const ass = Object.entries(meta.arvore[d] || {}).filter(([a]) => a);
@@ -85,12 +134,44 @@ function ligarFiltros(form, f, meta, aoMudar) {
         ${ass.map(([a, n]) => `<button type="button" class="chip" data-campo="assunto" data-valor="${esc(a)}"
           aria-pressed="${f.assunto.includes(a)}">${esc(a)} <span class="n">${n}</span></button>`).join("")}</div></div>` : "";
     }).join("");
-    $(".grupo-assuntos", form).innerHTML = blocos ? `<fieldset class="grupo-filtro"><legend>Assunto</legend>${blocos}</fieldset>` : "";
     // assuntos de disciplinas desmarcadas saem do filtro
     const validos = new Set(f.disciplina.flatMap(d => Object.keys(meta.arvore[d] || {})));
     f.assunto = f.assunto.filter(a => validos.has(a));
+    const aberto = $(".grupo-assuntos details", form)?.open;
+    $(".grupo-assuntos", form).innerHTML = blocos ? grupoAbre("assunto", "Assunto", blocos, resumoGrupo(f, "assunto")) : "";
+    if (aberto && blocos) $(".grupo-assuntos details", form).open = true;
+  };
+  // atualiza o texto à direita de cada linha e o botão "Meu foco"
+  const resumir = () => {
+    const mostrar = (grupo, texto) => {
+      const el = $(`[data-grupo="${grupo}"] .grupo-escolha`, form);
+      if (!el) return;
+      el.textContent = texto;
+      el.classList.toggle("escolhido", !RESUMOS_PADRAO.includes(texto));
+    };
+    for (const [c] of GRUPOS_FILTRO) mostrar(c, resumoGrupo(f, c));
+    mostrar("status", SITUACOES.find(s => s[0] === f.status)?.[1] ?? "Todas");
+    mostrar("outros", OUTROS.filter(([c]) => f[c]).map(o => o[2]).join(", ") || "Nenhum");
+    $(".meu-foco", form).outerHTML = htmlMeuFoco(f);
+  };
+  const redesenhar = () => {
+    caixa.innerHTML = htmlGruposFiltro(f, meta, { ordem: caixa.dataset.ordem === "true" });
+    desenharAssuntos();
   };
   form.addEventListener("click", e => {
+    const acao = e.target.closest("[data-acao]")?.dataset.acao;
+    if (acao === "salvar-foco") {
+      const { ordem, ...foco } = f;
+      gravarLocal(CHAVE_FOCO, structuredClone(foco));
+      resumir();
+      return avisar("Pronto: estes filtros agora são o seu foco.");
+    }
+    if (acao === "aplicar-foco") {
+      const foco = novosFiltros(lerFoco());
+      for (const k of Object.keys(FILTROS_PADRAO)) if (k !== "ordem") f[k] = foco[k];
+      redesenhar();
+      return aoMudar();
+    }
     const chip = e.target.closest("button.chip");
     if (!chip) return;
     const { campo, valor } = chip.dataset;
@@ -99,6 +180,7 @@ function ligarFiltros(form, f, meta, aoMudar) {
     if (i >= 0) lista.splice(i, 1); else lista.push(campo === "ano" ? Number(valor) : valor);
     chip.setAttribute("aria-pressed", i < 0);
     if (campo === "disciplina") desenharAssuntos();
+    resumir();
     aoMudar();
   });
   form.addEventListener("change", e => {
@@ -107,6 +189,7 @@ function ligarFiltros(form, f, meta, aoMudar) {
     else if (el.type === "checkbox" && el.name in FILTROS_PADRAO) f[el.name] = el.checked;
     else if (el.name === "ordem") f.ordem = el.value;
     else return;
+    resumir();
     aoMudar();
   });
   desenharAssuntos();
@@ -133,6 +216,7 @@ async function telaResolverFiltros() {
         <div class="painel">
           <div class="numero-grande" id="n-filtradas">…</div>
           <p class="dica" id="n-rotulo">questões com esses filtros</p>
+          <p class="dica n-base" id="n-base"></p>
           <button class="botao primario" id="comecar" type="button" style="width:100%">Começar</button>
           <button class="botao-texto" id="limpar" type="button" style="margin-top:10px">Limpar filtros</button>
         </div>
@@ -147,6 +231,8 @@ async function telaResolverFiltros() {
       const { total } = await api("/api/resolver/contar?" + queryDeFiltros(f));
       $("#n-filtradas").textContent = total;
       $("#n-rotulo").textContent = total === 1 ? "questão com esses filtros" : "questões com esses filtros";
+      const base = meta.contagem.diferentes ?? meta.contagem.total;
+      $("#n-base").textContent = `de ${base} questões diferentes no banco${f.sem_anuladas && meta.contagem.anuladas ? "; as anuladas ficam de fora" : ""}.`;
       $("#comecar").disabled = !total;
     }, 150);
   };
@@ -209,7 +295,8 @@ async function telaResolverQuestao(posStr) {
         <div>
           <h1 id="titulo-questao" class="questao-titulo">Questão ${pos + 1} <span>de ${total}</span></h1>
           <div class="questao-meta">
-            <span class="etiqueta roxa">${esc(q.disciplina || "Sem disciplina")}${q.assunto ? " / " + esc(q.assunto) : ""}</span>
+            <span class="etiqueta roxa">${esc(q.disciplina || "Sem disciplina")}</span>
+            ${q.assunto ? `<span class="etiqueta roxa">${esc(q.assunto)}</span>` : ""}
             ${q.anulada ? `<span class="etiqueta aviso">anulada</span>` : ""}
             <span>${[q.banca, q.orgao, q.cargo, q.ano].filter(Boolean).map(esc).join(", ")}${q.numero ? `, questão ${q.numero} da prova` : ""}</span>
           </div>

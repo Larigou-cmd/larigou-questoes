@@ -81,11 +81,14 @@ function desenharHudJogo() {
   if (!el || !JOGO) return;
   const j = JOGO;
   el.hidden = false;
-  el.title = `Nível ${j.nivel} (${j.titulo}), ${j.xp} XP. Sequência: ${j.sequencia} ${j.sequencia === 1 ? "dia" : "dias"}.`;
-  el.setAttribute("aria-label", el.title);
-  el.innerHTML = `<span class="hud-nivel">${j.nivel}</span>
-    <span class="hud-xp"><span class="hud-xp-cheio" style="width:${Math.round((j.xpNoNivel / j.xpDoNivel) * 100)}%"></span></span>
-    <span class="hud-seq ${j.estudouHoje ? "acesa" : ""}">${ICONE_CHAMA}${j.sequencia}</span>`;
+  const dias = `${j.sequencia} ${j.sequencia === 1 ? "dia" : "dias"}`;
+  el.title = `Nível ${j.nivel} (${j.titulo}), ${j.xpNoNivel} de ${j.xpDoNivel} XP neste nível. Sequência: ${dias}.`;
+  el.removeAttribute("aria-label"); // o nome lido em voz alta vem do próprio texto, igual ao que aparece
+  el.innerHTML = `<span class="hud-nivel"><span class="sr">Nível </span>${j.nivel}</span>
+    <span class="hud-rotulo" aria-hidden="true">XP</span>
+    <span class="hud-xp" aria-hidden="true"><span class="hud-xp-cheio" style="width:${Math.round((j.xpNoNivel / j.xpDoNivel) * 100)}%"></span></span>
+    <span class="hud-num">${j.xpNoNivel}/${j.xpDoNivel}<span class="sr"> XP</span></span>
+    <span class="hud-seq ${j.estudouHoje ? "acesa" : ""}">${ICONE_CHAMA}${j.sequencia}<span class="sr"> ${j.sequencia === 1 ? "dia seguido" : "dias seguidos"}</span></span>`;
 }
 
 /** Painéis de nível e sequência da tela Início. */

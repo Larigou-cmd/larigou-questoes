@@ -168,7 +168,7 @@ async function telaDesempenho() {
         <a class="botao" href="#/desempenho/historico">Histórico de respostas</a></div>
       <section class="kpis">
         <div class="kpi principal"><div class="numero-grande">${fmtPct(g.percentual)}</div><p>de acerto em ${g.respostas} respostas</p></div>
-        <div class="kpi"><strong>${g.questoes}</strong><span>questões diferentes resolvidas, de ${g.total_banco} no banco</span></div>
+        <div class="kpi"><strong>${g.questoes}</strong><span>questões resolvidas, de ${g.total_banco} questões diferentes</span></div>
         <div class="kpi"><strong>${g.dias}</strong><span>${g.dias === 1 ? "dia" : "dias"} de estudo desde ${fmtData(g.primeira)}</span></div>
         <a class="kpi kpi-link" href="#/caderno"><strong>${r.caderno.hoje}</strong><span>${r.caderno.hoje === 1 ? "questão" : "questões"} para revisar hoje no caderno de erros</span></a>
       </section>

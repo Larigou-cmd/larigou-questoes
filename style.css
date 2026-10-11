@@ -45,7 +45,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --fundo: #05020C; --superficie: #0E0720; --superficie-2: #1A0F33; --tinta: #EFE9FF; --tinta-2: #A396C8;
+    --fundo: #05020C; --superficie: #0E0720; --superficie-2: #1A0F33; --tinta: #EFE9FF; --tinta-2: #B7ABDB;
     --linha: #3A2A66; --primaria: #C084FC; --primaria-tinta: #0B0418; --primaria-suave: #1F0F3F; --foco: #E040FB;
     --certo: #3CF2A5; --certo-suave: #07261D; --errado: #FF4D8D; --errado-suave: #2E0B1D; --grade: rgba(192, 132, 252, .06);
     --atencao: #F5B84A; --atencao-suave: #33240C; --sombra: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
@@ -53,7 +53,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --fundo: #05020C; --superficie: #0E0720; --superficie-2: #1A0F33; --tinta: #EFE9FF; --tinta-2: #A396C8;
+  --fundo: #05020C; --superficie: #0E0720; --superficie-2: #1A0F33; --tinta: #EFE9FF; --tinta-2: #B7ABDB;
   --linha: #3A2A66; --primaria: #C084FC; --primaria-tinta: #0B0418; --primaria-suave: #1F0F3F; --foco: #E040FB;
   --certo: #3CF2A5; --certo-suave: #07261D; --errado: #FF4D8D; --errado-suave: #2E0B1D; --grade: rgba(192, 132, 252, .06);
   --atencao: #F5B84A; --atencao-suave: #33240C; --sombra: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
@@ -359,7 +359,7 @@ code { background: var(--superficie-2); padding: 1px 6px; border-radius: 4px; fo
   .resumo-filtros .painel { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 12px; padding: 12px 16px; box-shadow: var(--sombra); }
   .resumo-filtros .numero-grande { font-size: 2.2rem; grid-row: span 2; }
   .resumo-filtros p { margin: 0; }
-  .resumo-filtros #limpar { display: none; }
+  .resumo-filtros #limpar, .resumo-filtros .n-base { display: none; }
 }
 
 /* ============ Resolver: questão ============ */
@@ -816,3 +816,62 @@ h1, h2 { font-weight: 700; letter-spacing: .01em; }
   .cartao-nivel { gap: 14px; }
   .hex-nivel { width: 60px; height: 66px; font-size: 1.6rem; }
 }
+
+/* ============ revisão de design (outubro/2026) ============ */
+h2 .dica { font-weight: 400; margin-left: 6px; }
+
+/* Início: provas agrupadas por órgão */
+.grupos-provas { display: grid; gap: 8px; }
+.grupo-provas { border: 1px solid var(--linha); background: var(--superficie-2); }
+.grupo-provas[open] { border-color: color-mix(in srgb, var(--primaria) 60%, var(--linha)); }
+.grupo-provas > summary { display: flex; align-items: baseline; gap: 12px; padding: 11px 12px; cursor: pointer; list-style: none; }
+.grupo-provas > summary::-webkit-details-marker { display: none; }
+.grupo-provas > summary .dica { margin-left: auto; white-space: nowrap; }
+.grupo-provas > summary::after { content: "▸"; color: var(--tinta-2); }
+.grupo-provas[open] > summary::after { content: "▾"; }
+.grupo-provas ul { list-style: none; margin: 0; padding: 0 12px 6px; }
+.grupo-provas li { display: grid; grid-template-columns: minmax(0, 1fr) auto 2.2em; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--linha); }
+.prova-nome .dica { display: block; font-size: .78rem; }
+.grupo-provas .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* filtros: cada grupo é uma linha que abre, com o que está escolhido à direita */
+.grupo-filtro { border: 1px solid var(--linha); background: var(--superficie); margin: 0 0 8px; }
+.grupo-filtro[open] { border-color: color-mix(in srgb, var(--primaria) 60%, var(--linha)); }
+.grupo-filtro > summary { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.grupo-filtro > summary::-webkit-details-marker { display: none; }
+.grupo-filtro > summary::after { content: "▸"; flex: none; color: var(--tinta-2); }
+.grupo-filtro[open] > summary::after { content: "▾"; }
+.grupo-titulo { flex: none; font-weight: 700; }
+.grupo-escolha { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tinta-2); }
+.grupo-escolha.escolhido { color: var(--primaria); font-weight: 600; }
+.grupo-corpo { padding: 2px 14px 14px; }
+.grupo-corpo .sub-grupo + .sub-grupo { margin-top: 12px; }
+.campo-ordem { max-width: 320px; margin-top: 14px; }
+.n-base { margin-top: 2px; }
+
+/* Meu foco: o filtro de sempre, num toque */
+.meu-foco { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 12px; }
+.meu-foco:empty { display: none; }
+.botao-foco {
+  display: flex; gap: 8px; align-items: center; width: 100%; min-width: 0; padding: 12px 14px; cursor: pointer; text-align: left;
+  border: 1px dashed var(--magenta); background: color-mix(in srgb, var(--magenta) 8%, transparent); color: var(--magenta);
+  font: inherit; font-weight: 700;
+}
+.botao-foco[aria-pressed="true"] { border-style: solid; }
+.foco-resumo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--tinta); }
+
+/* tela da questão no celular: barras de baixo mais finas */
+@media (max-width: 760px) {
+  .menu { padding-top: 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
+  .menu .icone { padding: 3px 12px; }
+}
+@media (max-width: 560px) {
+  .barra-resposta { padding: 8px 0; }
+  .barra-resposta .botao { min-height: 40px; padding-top: 6px; padding-bottom: 6px; }
+}
+
+/* selo de XP no topo: com nome e número */
+.hud-rotulo { font-size: .68rem; letter-spacing: .08em; color: var(--tinta-2); }
+.hud-num { font-size: .78rem; font-weight: 600; color: var(--tinta-2); }
+@media (max-width: 760px) { .hud-rotulo, .hud-num { display: none; } }
+.foco-rotulo { flex: none; white-space: nowrap; }

@@ -259,10 +259,23 @@ async function telaInicio() {
       </div></div>`;
     return;
   }
+  // questões diferentes por disciplina (a árvore do meta já conta cada repetida uma vez só)
   const porDisc = {};
-  const discs = await Promise.all(m.disciplinas.map(async d => [d, (await api(`/api/questoes?disciplina=${encodeURIComponent(d)}&limite=1`)).total]));
-  discs.forEach(([d, n]) => { if (n) porDisc[d] = n; });
+  for (const [d, ass] of Object.entries(m.arvore)) {
+    const n = Object.values(ass).reduce((a, b) => a + b, 0);
+    if (d && n) porDisc[d] = n;
+  }
   const maior = Math.max(...Object.values(porDisc), 1);
+  // provas agrupadas por órgão, órgão com mais provas primeiro
+  const porOrgao = {};
+  for (const p of m.provas) (porOrgao[p.orgao || "Sem órgão"] ??= []).push(p);
+  const grupos = Object.entries(porOrgao).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], "pt-BR"));
+  const nomeCurto = o => o.replace(/^Prefeitura (Municipal )?de /i, "");
+  const linhaProva = p => `<li>
+    <span class="prova-nome">${window.MODO_WEB ? esc(p.cargo || "Sem cargo") : `<a href="#/questoes?prova=${p.id}">${esc(p.cargo || "Sem cargo")}</a>`}
+      <span class="dica">${esc(p.concurso || "")}${p.ano ? ` · ${p.ano}` : ""}</span></span>
+    <span class="etiqueta ${p.gabarito_status === "definitivo" ? "ok" : "aviso"}">${esc(p.gabarito_status || "?")}</span>
+    <span class="num">${p.n}</span></li>`;
   await atualizarJogo();
 
   main.innerHTML = `
@@ -287,18 +300,16 @@ async function telaInicio() {
     ${htmlPainelJogo()}
     <div class="grade-2">
       <section class="painel">
-        <h2>Provas importadas</h2>
-        <table class="tabela-provas">
-          <thead><tr><th>Órgão</th><th>Cargo</th><th class="opcional">Gabarito</th><th class="num">Questões</th></tr></thead>
-          <tbody>${m.provas.map(p => `<tr>
-            <td>${window.MODO_WEB ? esc(p.orgao || "Sem órgão") : `<a href="#/questoes?prova=${p.id}">${esc(p.orgao || "Sem órgão")}</a>`}<br><span class="dica">${esc(p.concurso || "")} ${p.ano ? `(${p.ano})` : ""}</span></td>
-            <td>${esc(p.cargo || "")}</td>
-            <td class="opcional"><span class="etiqueta ${p.gabarito_status === "definitivo" ? "ok" : "aviso"}">${esc(p.gabarito_status || "?")}</span></td>
-            <td class="num">${p.n}</td></tr>`).join("")}</tbody>
-        </table>
+        <h2>Provas importadas <span class="dica">${m.provas.length} prova${m.provas.length === 1 ? "" : "s"}</span></h2>
+        <div class="grupos-provas">${grupos.map(([orgao, ps]) => `
+          <details class="grupo-provas">
+            <summary><strong>${esc(nomeCurto(orgao))}</strong>
+              <span class="dica">${ps.length} prova${ps.length === 1 ? "" : "s"} · ${ps.reduce((a, p) => a + p.n, 0)} questões</span></summary>
+            <ul>${ps.map(linhaProva).join("")}</ul>
+          </details>`).join("")}</div>
       </section>
       <section class="painel">
-        <h2>Questões por disciplina</h2>
+        <h2>Questões por disciplina <span class="dica">sem contar repetidas</span></h2>
         <div class="barras">${Object.entries(porDisc).sort((a, b) => b[1] - a[1]).map(([d, n]) => `
           <a class="barra" href="${window.MODO_WEB ? "#/resolver" : `#/questoes?disciplina=${encodeURIComponent(d)}`}" style="text-decoration:none;color:inherit">
             <span>${esc(d)}</span><span class="trilho"><span class="cheio" style="width:${(n / maior) * 100}%;display:block"></span></span><span class="valor">${n}</span>

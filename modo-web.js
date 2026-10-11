@@ -399,13 +399,18 @@ rota("GET", /^\/api\/desempenho\/resumo$/, () => {
   const certas = rs.filter(r => r.correta === 1).length, erradas = rs.filter(r => r.correta === 0).length;
   const geral = { respostas: rs.length, certas, erradas, questoes: new Set(rs.map(r => r.hash)).size,
     dias: new Set(rs.map(r => r.respondida_em.slice(0, 10))).size, primeira: datas[0] || null, ultima: datas.at(-1) || null,
-    total_banco: WEB.dados.questoes.length, percentual: pct(certas, certas + erradas) };
-  const totalDisc = {}, totalAss = {};
+    total_banco: 0, percentual: pct(certas, certas + erradas) };
+  // questões diferentes: cópias da mesma questão em provas diferentes contam uma vez só
+  const totalDisc = {}, totalAss = {}, vistas = new Set();
   for (const q of WEB.dados.questoes) {
+    const chave = q.chave_conteudo || "id" + q.id;
+    if (vistas.has(chave)) continue;
+    vistas.add(chave);
     const d = q.disciplina || "Sem disciplina", a = q.assunto || "Sem assunto";
     totalDisc[d] = (totalDisc[d] || 0) + 1;
     totalAss[d + "|" + a] = (totalAss[d + "|" + a] || 0) + 1;
   }
+  geral.total_banco = vistas.size;
   const discs = {}, serie = {};
   for (const r of rs) {
     const q = WEB.porHash.get(r.hash);
