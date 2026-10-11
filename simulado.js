@@ -42,11 +42,16 @@ async function telaSimulados() {
         : `<span class="botao pequeno primario">Continuar (${s.respondidas || 0}/${s.n})</span>`}
     </a>`;
   };
+  // simulado em andamento: cartão + botão de excluir ao lado (botão não pode ficar dentro do link)
+  const cartaoAndamento = s => `<div class="cartao-com-acao">${cartao(s)}
+    <button type="button" class="botao-icone excluir-andamento" data-id="${s.id}" data-titulo="${esc(s.titulo)}"
+      data-respondidas="${s.respondidas || 0}" title="Excluir este simulado" aria-label="Excluir o simulado ${esc(s.titulo)}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div>`;
 
   main.innerHTML = `
     <div class="simulados">
       <h1>Simulados</h1>
-      ${emAndamento.length ? `<section><h2>Em andamento</h2><div class="lista-revisao">${emAndamento.map(cartao).join("")}</div></section>` : ""}
+      ${emAndamento.length ? `<section><h2>Em andamento</h2><div class="lista-revisao">${emAndamento.map(cartaoAndamento).join("")}</div></section>` : ""}
       <section class="painel montar">
         <h2>Montar simulado</h2>
         <div class="alternar" role="group" aria-label="Como montar">
@@ -107,6 +112,13 @@ async function telaSimulados() {
     }, 150);
   };
   ligarFiltros($("#form-sim-filtros"), f, meta, contar);
+  $$(".excluir-andamento").forEach(b => b.onclick = async () => {
+    const n = Number(b.dataset.respondidas);
+    if (!confirm(`Excluir o simulado "${b.dataset.titulo}"?${n === 1 ? "\n\nA resposta que você já marcou nele será apagada." : n ? `\n\nAs ${n} respostas que você já marcou nele serão apagadas.` : ""}\n\nNão dá para desfazer.`)) return;
+    await api(`/api/simulados/${b.dataset.id}`, { method: "DELETE" });
+    avisar("Simulado excluído.");
+    telaSimulados();
+  });
   $$("[data-modo]").forEach(b => b.onclick = () => {
     cfg.modo = b.dataset.modo;
     $$("[data-modo]").forEach(x => x.setAttribute("aria-pressed", x === b));

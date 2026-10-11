@@ -875,3 +875,9 @@ h2 .dica { font-weight: 400; margin-left: 6px; }
 .hud-num { font-size: .78rem; font-weight: 600; color: var(--tinta-2); }
 @media (max-width: 760px) { .hud-rotulo, .hud-num { display: none; } }
 .foco-rotulo { flex: none; white-space: nowrap; }
+
+/* simulado em andamento: cartão + lixeira ao lado */
+.cartao-com-acao { display: flex; gap: 8px; align-items: center; }
+.cartao-com-acao > .cartao-simulado { flex: 1; min-width: 0; }
+.excluir-andamento { flex: none; }
+.excluir-andamento:hover { color: var(--errado); }
