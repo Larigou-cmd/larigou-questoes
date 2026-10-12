@@ -463,7 +463,8 @@ rota("GET", /^\/api\/caderno$/, (_, args) => {
 });
 rota("GET", /^\/api\/caderno\/ids$/, (_, args) => {
   const hoje = hojeIso();
-  const ids = itensCaderno().filter(i => !i.dominada && i.proxima_em <= hoje && (!args.get("disciplina") || i.disciplina === args.get("disciplina")))
+  const todas = !!args.get("todas"); // todas as pendentes, mesmo as que ainda não chegaram no dia
+  const ids = itensCaderno().filter(i => !i.dominada && (todas || i.proxima_em <= hoje) && (!args.get("disciplina") || i.disciplina === args.get("disciplina")))
     .sort(comparar(i => i.proxima_em, i => -i.erros)).map(i => i.questao_id);
   return { ids };
 });

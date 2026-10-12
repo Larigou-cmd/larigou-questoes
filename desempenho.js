@@ -322,7 +322,10 @@ async function telaCaderno() {
         <div class="revisar-acoes">
           <label class="campo"><span>Disciplina</span><select class="entrada" id="cad-disc"><option value="">Todas</option></select></label>
           <button class="botao primario" id="revisar-agora" type="button">Revisar agora</button>
+          <button class="botao" id="resolver-materia" type="button">Resolver todas as pendentes</button>
         </div>
+        <p class="dica resolver-materia-dica">"Resolver todas" traz também as que ainda não chegaram no dia da revisão.
+          Acertar antes do dia não adianta a etapa; errar faz a questão recomeçar.</p>
       </section>
       <div class="editor-cabeca" style="margin-top:24px">
         <div class="alternar" role="group" aria-label="Mostrar">
@@ -341,6 +344,9 @@ async function telaCaderno() {
     $("#n-hoje").textContent = hojeFiltrado;
     $("#rot-hoje").textContent = `${hojeFiltrado === 1 ? "questão" : "questões"} para revisar hoje${f.disciplina ? " em " + f.disciplina : ""}`;
     $("#revisar-agora").disabled = !hojeFiltrado;
+    const pendentes = (await api("/api/caderno/ids?" + new URLSearchParams({ todas: 1, ...(f.disciplina ? { disciplina: f.disciplina } : {}) }))).ids.length;
+    $("#resolver-materia").textContent = `Resolver todas ${f.disciplina ? "de " + f.disciplina : "as pendentes"} (${pendentes})`;
+    $("#resolver-materia").disabled = !pendentes;
     $('[data-n="hoje"]').textContent = c.hoje;
     $('[data-n="pendentes"]').textContent = c.pendentes;
     $('[data-n="dominadas"]').textContent = c.dominadas;
@@ -375,6 +381,12 @@ async function telaCaderno() {
   $("#revisar-agora").onclick = async () => {
     const { ids } = await api("/api/caderno/ids?" + new URLSearchParams(f.disciplina ? { disciplina: f.disciplina } : {}));
     if (!ids.length) return avisar("Nada para revisar hoje.");
+    gravarLocal("larigou.sessao", { ids, pos: 0, resultados: {}, filtros: null, origem: "caderno", inicio: new Date().toISOString() });
+    location.hash = "#/resolver/1";
+  };
+  $("#resolver-materia").onclick = async () => {
+    const { ids } = await api("/api/caderno/ids?" + new URLSearchParams({ todas: 1, ...(f.disciplina ? { disciplina: f.disciplina } : {}) }));
+    if (!ids.length) return avisar("Nenhuma questão pendente no caderno.");
     gravarLocal("larigou.sessao", { ids, pos: 0, resultados: {}, filtros: null, origem: "caderno", inicio: new Date().toISOString() });
     location.hash = "#/resolver/1";
   };

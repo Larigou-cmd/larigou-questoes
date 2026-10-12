@@ -881,3 +881,11 @@ h2 .dica { font-weight: 400; margin-left: 6px; }
 .cartao-com-acao > .cartao-simulado { flex: 1; min-width: 0; }
 .excluir-andamento { flex: none; }
 .excluir-andamento:hover { color: var(--errado); }
+
+/* caderno: "Revisar agora" + "Resolver todas" cabem no celular */
+.revisar-acoes .botao { white-space: normal; text-align: center; }
+.resolver-materia-dica { flex-basis: 100%; margin: 0; max-width: 70ch; }
+@media (max-width: 560px) {
+  .revisar-acoes { width: 100%; }
+  .revisar-acoes > * { flex: 1 1 100%; min-width: 0; }
+}
